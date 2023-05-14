@@ -46,6 +46,7 @@ def decode_labels(labels, thresh):
 
 ### Dataset
 class ImageDataset(Dataset):
+    
   def __init__(self, label_file, dir, num_labels, transform=None):
     '''
         label_file: the label file to load, ending with .csv
@@ -67,6 +68,9 @@ class ImageDataset(Dataset):
         self.train = True
     else:
         self.train = False
+
+    # restrict the number of samples for training and validation
+    self.df = self.df.head(10000)
 
   def __len__(self):
     '''

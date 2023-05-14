@@ -12,6 +12,7 @@ from torchsummary import summary
 from dataset import *
 from model import *
 import matplotlib.pyplot as plt
+from sklearn.metrics import f1_score
 
 # use GPU if possible
 use_cuda = True if torch.cuda.is_available() else False
@@ -23,7 +24,7 @@ batch_size = 32
 train_val_split = 0.8
 img_size = (224, 224)
 transforms = Compose([ToTensor(),
-                      Resize(img_size),
+                      Resize(img_size, antialias=True),
                       ])
 
 # The main dataset available with labels
@@ -38,55 +39,89 @@ train_dataset, val_dataset = random_split(dataset, length)
 train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 val_dataloader   = DataLoader(val_dataset, batch_size=1, shuffle=False)
 
-# show one item from the dataset
-sample_img, label, caption = train_dataset[15]
-plt.imshow(sample_img.transpose(0, 1).transpose(1, 2))
-plt.show()
-print(label)
-print(caption)
+# # show one item from the dataset
+# sample_img, label, caption = train_dataset[15]
+# plt.imshow(sample_img.transpose(0, 1).transpose(1, 2))
+# plt.show()
+# print(label)
+# print(caption)
 
 
-# lr = 0.001
-# epochs = 20
-# # initialize the model
-# model = MultilabelCNN(num_labels)
-# model.to(device)
-# summary(model, input_size=(3, 224, 224))
+lr = 1e-4
+epochs = 20
+# initialize the model
+model = MultilabelCNN(num_labels)
+model.to(device)
+summary(model, input_size=(3, 224, 224))
 
-# loss_func = nn.BCELoss()
-# optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+loss_func = nn.BCELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
 
-# # Training and validation
-# loss_hist = []
-# for epo in range(epochs):
-#     epo_loss = []
-#     progress_bar = tqdm(range(len(train_dataloader)))
-#     for i, (img, label, cap) in enumerate(train_dataloader):
-#         # Zero gradient
-#         optimizer.zero_grad()
-#         # Make predictions
-#         pred = model(img.to(device))
-#         # Compute the loss and its gradients
-#         loss = loss_func(pred.float(), label.float().to(device))
-#         loss.backward()
-#         # Adjust learning weights
-#         optimizer.step()
-#         # Gather data and report
-#         epo_loss.append(loss.item())
-#         progress_bar.update(1)
-#     progress_bar.close()
-#     epo_loss = np.array(epo_loss)
-#     loss_hist.append(epo_loss)
+# Training and validation
+tra_loss_hist = []
+tra_f1_scores = []
+val_loss_hist = []
+val_f1_scores = []
 
-#     # Validation
-#     model.eval()
-#     with torch.no_grad():
-#         val_loss = 0
-#         for img, label, cap in val_dataloader:
-#             output = model(img)
-#             val_loss += loss_func(output, label)
-#         val_loss /= len(val_dataloader)
-        
-#     print(f'Epoch {epo+1} Train BCELoss = {round(epo_loss.mean(), 2)}.\n')
-# loss_hist = np.array(loss_hist)
+for epo in range(epochs):
+    # Training
+    epo_loss = []
+    progress_bar = tqdm(range(len(train_dataloader)))
+    train_pred = []
+    train_targ = []
+    for i, (img, label, cap) in enumerate(train_dataloader):
+        # Zero gradient
+        optimizer.zero_grad()
+        # Make predictions
+        pred = model(img.to(device))
+        # get the labels 
+        train_pred.append(one_hot_encoding(num_labels, decode_labels(pred.cpu().tolist()[0], 0.5)))
+        train_targ.append(label.cpu().tolist()[0])
+        # Compute the loss and its gradients
+        loss = loss_func(pred.float(), label.float().to(device))
+        loss.backward()
+        # Adjust learning weights
+        optimizer.step()
+        # Gather data and report
+        epo_loss.append(loss.item())
+        progress_bar.update(1)
+    progress_bar.close()
+    epo_loss = np.array(epo_loss)
+    tra_loss_hist.append(epo_loss)
+
+    # Validation
+    model.eval()
+    epo_loss_val = []
+    pred_ls = []
+    targ_ls = []
+    with torch.no_grad():
+        val_loss = 0
+        progress_bar = tqdm(range(len(val_dataloader)))
+        for img, label, cap in val_dataloader:
+            output = model(img.to(device))
+            val_loss = loss_func(output.float(), label.float().to(device))
+            # decode the label 
+            pred_ls.append(one_hot_encoding(num_labels, decode_labels(output.cpu().tolist()[0], 0.5)))
+            targ_ls.append(label.cpu().tolist()[0])
+            epo_loss_val.append(val_loss.item())
+            progress_bar.update(1)
+        progress_bar.close()
+        f1_tra = f1_score(train_pred, train_targ, average='weighted', zero_division=0)
+        tra_f1_scores.append(f1_tra)
+        f1_val = f1_score(pred_ls, targ_ls, average='weighted', zero_division=0)
+        val_f1_scores.append(f1_val)
+        epo_loss_val = np.array(epo_loss_val)
+        val_loss_hist.append(epo_loss_val)
+    # print the loss during training
+    print(f'Epoch {epo+1} Train BCELoss = {round(epo_loss.mean(), 2)}, Train F1-score = {round(f1_tra, 2)}, Validation BCELoss = {round(epo_loss_val.mean(), 2)}, Validation F1-score = {round(f1_val, 2)}.\n')
+
+tra_loss_hist = np.array(tra_loss_hist)
+val_loss_hist = np.array(val_loss_hist)
+
+# save the model and the training/validation history.
+np.save('trained_models/efficientnet_b4_train_loss.npy', tra_loss_hist)
+np.save('trained_models/efficientnet_b4_valid_loss.npy', val_loss_hist)
+np.save('trained_models/efficientnet_b4_train_f1.npy', tra_f1_scores)
+np.save('trained_models/efficientnet_b4_valid_f1.npy', val_f1_scores)
+torch.save(model.state_dict(), 'trained_models/efficientnet_b4.pth')
