@@ -7,13 +7,12 @@ from dataset import *
 
 class MultilabelCNN(nn.Module):
 
-  def __init__(self, num_classes):
+  def __init__(self, num_classes, pretrained_model, out_size=None):
     super(MultilabelCNN, self).__init__()
     # define convolutional layers
-    self.pretrained_model = models.efficientnet_b4(pretrained=True) # pretrained model
+    self.pretrained_model = pretrained_model
     self.pretrained = nn.Sequential(*(list(self.pretrained_model.children())[:-1])) # remove last layer
-    
-    self.classifier = nn.Sequential(nn.Linear(list(self.pretrained_model.children())[-1][1].in_features, 19),
+    self.classifier = nn.Sequential(nn.Linear(out_size, num_classes),
                                     nn.Sigmoid()
                                     )
 

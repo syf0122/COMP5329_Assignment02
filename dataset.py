@@ -18,7 +18,6 @@ from torchsummary import summary
 from dataset import *
 
 ### Label encoding and decoding
-
 def one_hot_encoding(num_of_labels, labels):
     '''
     num_of_labels: total number of unique labels
@@ -38,10 +37,19 @@ def decode_labels(labels, thresh):
 
     Return: a list of integer labels
     '''
+    # ensure hte labels are in a list
+    labels = list(labels)
+    # decode the labels using the threshold
     output = []
     for i in range(len(labels)):
         if labels[i] >= thresh:
             output.append(i + 1)
+
+    # if there is no label above the provided threshold
+    # return one label with the highest probability in the encoded label
+    if len(output) == 0:
+        max_index = labels.index(max(labels))
+        output.append(max_index+1)
     return output
 
 ### Dataset
@@ -69,8 +77,8 @@ class ImageDataset(Dataset):
     else:
         self.train = False
 
-    # restrict the number of samples for training and validation
-    self.df = self.df.head(10000)
+    # # restrict the number of samples for training and validation
+    # self.df = self.df.head(10000)
 
   def __len__(self):
     '''

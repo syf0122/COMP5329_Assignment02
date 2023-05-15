@@ -5,8 +5,8 @@ import torch.nn as nn
 import torchvision
 from torchvision import models
 from torchvision.transforms import *
-import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader, random_split
+import torchvision.transforms.functional as functional
+from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 from torchsummary import summary
 from dataset import *
@@ -14,17 +14,26 @@ from model import *
 import matplotlib.pyplot as plt
 from sklearn.metrics import f1_score
 
+
+# class HE(object):
+#     def __call__(self, img):
+#         img = functional.equalize(img)  # Apply histogram equalization
+#         return img
+
 # use GPU if possible
 use_cuda = True if torch.cuda.is_available() else False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print('I am using GPU.' if use_cuda else 'I am using CPU.')
 
 num_labels = 19
-batch_size = 32
+batch_size = 64
 train_val_split = 0.8
 img_size = (224, 224)
 transforms = Compose([ToTensor(),
                       Resize(img_size, antialias=True),
+                      Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                      RandomHorizontalFlip(),
+                      RandomRotation(90),
                       ])
 
 # The main dataset available with labels
@@ -49,11 +58,24 @@ val_dataloader   = DataLoader(val_dataset, batch_size=1, shuffle=False)
 
 lr = 1e-4
 epochs = 20
+model_to_use = 'vgg19'
 # initialize the model
-model = MultilabelCNN(num_labels)
+if model_to_use == 'vgg19':
+    pretrained_model = models.vgg19(pretrained=True)
+    model = MultilabelCNN(num_labels, pretrained_model, out_size=25088)
+elif model_to_use == 'resnet50':
+    pretrained_model = models.resnet50(pretrained=True)
+    model = MultilabelCNN(num_labels, pretrained_model, out_size=2048)
+elif model_to_use == 'efficientnet_b4':
+    pretrained_model = models.efficientnet_b4(pretrained=True)
+    model = MultilabelCNN(num_labels, pretrained_model, out_size=1792)
+elif model_to_use == 'alexnet':
+    pretrained_model = models.alexnet(pretrained=True)
+    model = MultilabelCNN(num_labels, pretrained_model, out_size=9216)
+
+
 model.to(device)
 summary(model, input_size=(3, 224, 224))
-
 loss_func = nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
@@ -120,8 +142,8 @@ tra_loss_hist = np.array(tra_loss_hist)
 val_loss_hist = np.array(val_loss_hist)
 
 # save the model and the training/validation history.
-np.save('trained_models/efficientnet_b4_train_loss.npy', tra_loss_hist)
-np.save('trained_models/efficientnet_b4_valid_loss.npy', val_loss_hist)
-np.save('trained_models/efficientnet_b4_train_f1.npy', tra_f1_scores)
-np.save('trained_models/efficientnet_b4_valid_f1.npy', val_f1_scores)
-torch.save(model.state_dict(), 'trained_models/efficientnet_b4.pth')
+np.save('trained_models/'+model_to_use+'_train_loss.npy', tra_loss_hist)
+np.save('trained_models/'+model_to_use+'_valid_loss.npy', val_loss_hist)
+np.save('trained_models/'+model_to_use+'_train_f1.npy', tra_f1_scores)
+np.save('trained_models/'+model_to_use+'_valid_f1.npy', val_f1_scores)
+torch.save(model.state_dict(), 'trained_models/'+model_to_use+'.pth')
