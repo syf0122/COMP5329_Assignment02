@@ -76,8 +76,9 @@ class ImageDataset(Dataset):
     
     # tokenizer
     self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
-    # # restrict the number of samples for training and validation
-    # self.df = self.df.head(10000)
+
+    # # restrict the number of samples for code test
+    # self.df = self.df.head(20)
 
   def __len__(self):
     '''

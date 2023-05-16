@@ -22,8 +22,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print('I am using GPU.' if use_cuda else 'I am using CPU.')
 
 num_labels = 19
-batch_size = 32
-train_val_split = 0.8
 img_size = (224, 224)
 transforms = Compose([ToTensor(),
                       Resize(img_size, antialias=True),
@@ -32,7 +30,7 @@ transforms = Compose([ToTensor(),
 
 # Load test data
 test_dataset = ImageDataset(label_file = 'test.csv',
-                            dir = dir,
+                            dir = 'data/',
                             num_labels = num_labels,
                             transform = transforms
                             )
@@ -59,25 +57,23 @@ model.to(device)
 
 # evaluation
 model.eval()
-predicted_results = {}
+predicted_results = []
+img_ids = []
 with torch.no_grad():
     progress_bar = tqdm(range(len(test_dataloader)))
     for img, txt_id, txt_mask, id in test_dataloader:
         output = model(img.to(device), txt_id.squeeze(1).to(device), txt_mask.to(device))
         # decode the label 
-        predicted_results[id] = one_hot_encoding(num_labels, decode_labels(output.cpu().tolist()[0], 0.5))
+        img_ids.append(id[0])
+        predicted_results.append(decode_labels(output.cpu().tolist()[0], 0.5))
         progress_bar.update(1)
     progress_bar.close()
-
-for id in predicted_results:
-    print(id)
-    print(predicted_results[id])
 
 # write the results to the file
 out_filename = 'Predicted_labels.txt'
 with open(out_filename, 'w') as f:
-    for id in predicted_results:
-        f.write(id+',')
-        for l in predicted_results:
-            f.write(' '+l)
+    for i in range(len(predicted_results)):
+        f.write(img_ids[i]+',')
+        for l in predicted_results[i]:
+            f.write(' '+str(l))
         f.write('\n')
