@@ -1,5 +1,3 @@
-import os
-import glob
 import re
 from io import StringIO
 from skimage import io
@@ -8,14 +6,13 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torchvision
-from torchvision import models
 from torchvision.transforms import *
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader, random_split
-from tqdm import tqdm
-import matplotlib.pyplot as plt
-from torchsummary import summary
+from torch.utils.data import Dataset
 from dataset import *
+from transformers import BertTokenizer
+
+# BERT learned and adapted from https://towardsdatascience.com/text-classification-with-bert-in-pytorch-887965e5820f
 
 ### Label encoding and decoding
 def one_hot_encoding(num_of_labels, labels):
@@ -76,7 +73,9 @@ class ImageDataset(Dataset):
         self.train = True
     else:
         self.train = False
-
+    
+    # tokenizer
+    self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
     # # restrict the number of samples for training and validation
     # self.df = self.df.head(10000)
 
@@ -91,7 +90,8 @@ class ImageDataset(Dataset):
         Get one sample from the dataset
         i: the index of the sample
     '''
-    img_file = self.dir + 'data/' + self.df.iloc[i]['ImageID']
+    img_id = self.df.iloc[i]['ImageID']
+    img_file = self.dir + 'data/' + img_id
     # load image
     img = io.imread(img_file)
     # apply transform
@@ -99,6 +99,15 @@ class ImageDataset(Dataset):
         img = self.transform(img)
     # get the caption
     caption = self.df.iloc[i]['Caption']
+    # tokenize
+    bert_input = self.tokenizer(caption,padding='max_length', 
+                           max_length = 20, 
+                           truncation=True, 
+                           return_tensors="pt")
+    # get the id and mask for caption
+    txt_ids = bert_input['input_ids']
+    txt_mask = bert_input['attention_mask']
+
     # get the label and encode the label
     if self.train:
         labels = self.df.iloc[i]['Labels']
@@ -106,5 +115,5 @@ class ImageDataset(Dataset):
         labels = [int(l) for l in labels]
         # one-hot-encoding
         labels = one_hot_encoding(self.num_labels, labels)
-        return (img, labels, caption)
-    return (img, caption)
+        return (img, labels, txt_ids, txt_mask, img_id)
+    return (img, txt_ids, txt_mask, img_id)
