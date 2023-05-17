@@ -70,10 +70,26 @@ with torch.no_grad():
     progress_bar.close()
 
 # write the results to the file
-out_filename = 'Predicted_labels.txt'
-with open(out_filename, 'w') as f:
-    for i in range(len(predicted_results)):
-        f.write(img_ids[i]+',')
-        for l in predicted_results[i]:
-            f.write(' '+str(l))
-        f.write('\n')
+out_filename = '480457778.csv'
+# with open(out_filename, 'w') as f:
+#     for i in range(len(predicted_results)):
+#         f.write(img_ids[i]+',')
+#         for l in predicted_results[i]:
+#             f.write(' '+str(l))
+#         f.write('\n')
+
+labels = []
+for ls in predicted_results:
+    label_combined = ''
+    for i in range(len(ls)):
+        label_combined += str(ls[i])
+        if i != (len(ls) - 1):
+            label_combined += ' '
+    labels.append(label_combined)
+
+df = pd.DataFrame(  
+    {'ImageID': img_ids,
+     'Labels': labels
+    })
+# print(df)
+df.to_csv(out_filename, index=False)

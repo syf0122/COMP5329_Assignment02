@@ -29,6 +29,7 @@ class MultilabelCNN(nn.Module):
 
       # classifier
       self.classifier = nn.Sequential(nn.BatchNorm1d(out_size+768),
+                                      nn.Dropout(dropout),
                                       nn.Linear(out_size+768, num_classes),
                                       nn.Sigmoid()
                                       )

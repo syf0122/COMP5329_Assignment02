@@ -55,7 +55,7 @@ val_dataloader   = DataLoader(val_dataset, batch_size=batch_size, shuffle=False,
 
 # some hyperparameters for training
 lr = 5e-5
-epochs = 5
+epochs = 4
 model_to_use = 'efficientnet_b4' # specify the model to use
 include_txt = True # whether to include text or not
 # initialize the model
