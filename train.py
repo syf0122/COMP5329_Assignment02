@@ -107,7 +107,7 @@ for epo in range(epochs):
         # Make predictions
         pred = model(img, txt_id, txt_mask)
         # get the labels 
-        train_pred.append(one_hot_encoding(num_labels, decode_labels(pred.cpu().tolist()[0], 0.5)))
+        train_pred.append(one_hot_encoding(num_labels, decode_labels(pred.cpu().tolist()[0], 0.6)))
         train_targ.append(label.cpu().tolist()[0])
         # Compute the loss and its gradients
         loss = loss_func(pred.float(), label.float())
@@ -140,7 +140,7 @@ for epo in range(epochs):
             # calculate loss
             val_loss = loss_func(output.float(), label.float())
             # decode the label 
-            pred_ls.append(one_hot_encoding(num_labels, decode_labels(output.cpu().tolist()[0], 0.5)))
+            pred_ls.append(one_hot_encoding(num_labels, decode_labels(output.cpu().tolist()[0], 0.6)))
             targ_ls.append(label.cpu().tolist()[0])
             epo_loss_val.append(val_loss.item())
             progress_bar.update(1)

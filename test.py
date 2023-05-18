@@ -56,6 +56,7 @@ elif model_to_use == 'efficientnet_v2_s':
     pretrained_model = models.efficientnet_v2_s(pretrained=True)
     model = MultilabelCNN(num_labels, pretrained_model, out_size=1280, multimodal=include_txt)
 model.load_state_dict(torch.load('trained_models/'+model_to_use+'_bert.pt'), strict=False)
+print(f'Using {model_to_use}_bert.pt')
 model.to(device) 
 
 # evaluation
@@ -68,7 +69,7 @@ with torch.no_grad():
         output = model(img.to(device), txt_id.squeeze(1).to(device), txt_mask.to(device))
         # decode the label 
         img_ids.append(id[0])
-        predicted_results.append(decode_labels(output.cpu().tolist()[0], 0.5))
+        predicted_results.append(decode_labels(output.cpu().tolist()[0], 0.6))
         progress_bar.update(1)
     progress_bar.close()
 
