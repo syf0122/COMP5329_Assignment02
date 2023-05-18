@@ -43,8 +43,8 @@ dataset = ImageDataset(label_file = 'train.csv',
 length = [int(round(train_val_split * len(dataset))), int(round((1 - train_val_split) * len(dataset)))]
 train_dataset, val_dataset = random_split(dataset, length) 
 # create dataloader
-train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=10)
-val_dataloader   = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=10)
+train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=6)
+val_dataloader   = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=6)
 
 # # show one item from the dataset
 # sample_img, label, caption = train_dataset[15]
@@ -54,9 +54,9 @@ val_dataloader   = DataLoader(val_dataset, batch_size=batch_size, shuffle=False,
 # print(caption)
 
 # some hyperparameters for training
-lr = 5e-5
-epochs = 4
-model_to_use = 'efficientnet_b4' # specify the model to use
+lr = 1e-4
+epochs = 5
+model_to_use = 'efficientnet_v2_s' # specify the model to use
 include_txt = True # whether to include text or not
 # initialize the model
 if model_to_use == 'vgg19':
@@ -71,6 +71,9 @@ elif model_to_use == 'efficientnet_b4':
 elif model_to_use == 'alexnet':
     pretrained_model = models.alexnet(pretrained=True)
     model = MultilabelCNN(num_labels, pretrained_model, out_size=9216, multimodal=include_txt)
+elif model_to_use == 'efficientnet_v2_s':
+    pretrained_model = models.efficientnet_v2_s(pretrained=True)
+    model = MultilabelCNN(num_labels, pretrained_model, out_size=1280, multimodal=include_txt)
 print(f'Using {model_to_use}, include text: {include_txt}.')
 
 model.to(device)

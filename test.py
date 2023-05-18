@@ -34,11 +34,11 @@ test_dataset = ImageDataset(label_file = 'test.csv',
                             num_labels = num_labels,
                             transform = transforms
                             )
-test_dataloader  = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=10)
+test_dataloader  = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=100)
 
 # load the trained model
 # initialize the model
-model_to_use = 'efficientnet_b4'
+model_to_use = 'efficientnet_v2_s'
 include_txt = True
 if model_to_use == 'vgg19':
     pretrained_model = models.vgg19(pretrained=True)
@@ -52,6 +52,9 @@ elif model_to_use == 'efficientnet_b4':
 elif model_to_use == 'alexnet':
     pretrained_model = models.alexnet(pretrained=True)
     model = MultilabelCNN(num_labels, pretrained_model, out_size=9216, multimodal=include_txt)
+elif model_to_use == 'efficientnet_v2_s':
+    pretrained_model = models.efficientnet_v2_s(pretrained=True)
+    model = MultilabelCNN(num_labels, pretrained_model, out_size=1280, multimodal=include_txt)
 model.load_state_dict(torch.load('trained_models/'+model_to_use+'_bert.pt'), strict=False)
 model.to(device) 
 
