@@ -1,1 +1,2 @@
 efficientnet_v2_s_bert.pt filter=lfs diff=lfs merge=lfs -text
+trained_models/efficientnet_v2_s_bert.pt filter=lfs diff=lfs merge=lfs -text
