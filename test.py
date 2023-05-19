@@ -82,6 +82,7 @@ out_filename = '480457778.csv'
 #             f.write(' '+str(l))
 #         f.write('\n')
 
+# for submission
 labels = []
 for ls in predicted_results:
     label_combined = ''

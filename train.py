@@ -159,11 +159,11 @@ val_loss_hist = np.array(val_loss_hist)
 
 if include_txt:
     # save the model and the training/validation history.
-    np.save('trained_models/'+model_to_use+'_bert_train_loss.npy', tra_loss_hist)
-    np.save('trained_models/'+model_to_use+'_bert_valid_loss.npy', val_loss_hist)
-    np.save('trained_models/'+model_to_use+'_bert_train_f1.npy', tra_f1_scores)
-    np.save('trained_models/'+model_to_use+'_bert_valid_f1.npy', val_f1_scores)
-    torch.save(model.state_dict(), 'trained_models/'+model_to_use+'_bert.pt')
+    np.save('trained_models/'+model_to_use+'_bert_epo5_th7_train_loss.npy', tra_loss_hist)
+    np.save('trained_models/'+model_to_use+'_bert_epo5_th7_valid_loss.npy', val_loss_hist)
+    np.save('trained_models/'+model_to_use+'_bert_epo5_th7_train_f1.npy', tra_f1_scores)
+    np.save('trained_models/'+model_to_use+'_bert_epo5_th7_valid_f1.npy', val_f1_scores)
+    torch.save(model.state_dict(), 'trained_models/'+model_to_use+'_bert_epo5_th7.pt')
 else:
     # save the model and the training/validation history.
     np.save('trained_models/'+model_to_use+'_train_loss.npy', tra_loss_hist)
